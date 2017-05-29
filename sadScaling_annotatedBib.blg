@@ -1,0 +1,46 @@
+This is BibTeX, Version 0.99d (TeX Live 2015)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: sadScaling_annotatedBib.aux
+The style file: plainnat.bst
+Database file #1: sadScaling.bib.bib
+You've used 11 entries,
+            2773 wiz_defined-function locations,
+            676 strings with 7191 characters,
+and the built_in function-call counts, 6393 in all, are:
+= -- 561
+> -- 450
+< -- 5
++ -- 152
+- -- 141
+* -- 597
+:= -- 999
+add.period$ -- 33
+call.type$ -- 11
+change.case$ -- 78
+chr.to.int$ -- 11
+cite$ -- 22
+duplicate$ -- 226
+empty$ -- 463
+format.name$ -- 158
+if$ -- 1294
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 11
+newline$ -- 63
+num.names$ -- 44
+pop$ -- 136
+preamble$ -- 1
+purify$ -- 67
+quote$ -- 0
+skip$ -- 186
+stack$ -- 0
+substring$ -- 345
+swap$ -- 11
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 121
+warning$ -- 0
+while$ -- 55
+width$ -- 0
+write$ -- 150

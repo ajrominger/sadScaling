@@ -1,0 +1,103 @@
+\documentclass[12pt]{article}
+\usepackage{geometry}
+\geometry{letterpaper}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{epstopdf}
+\usepackage[numbers]{natbib}
+\usepackage[unicode=true]{hyperref}
+\hypersetup{breaklinks=true,
+            pdfauthor={},
+            pdftitle={},
+            colorlinks=true,
+            citecolor=blue,
+            urlcolor=blue,
+            linkcolor=magenta,
+            pdfborder={0 0 0}}
+
+\setlength{\parindent}{0ex}
+\setlength{\parskip}{2em}
+
+\title{Scaling the species abundance distribution: annotated
+  bibliography}
+
+\author{A. J. Rominger}
+
+\begin{document}
+\maketitle
+
+\citet{bordaDeAgua2012} focus on upscaling the SAD by estimating its
+momenst at a smaller scale and then scaling those moments up.  They
+re-iterate, as do many papers, that individuals are aggregated and so
+scaling the SAD does not preserve its shape---although it would under
+Poisson spatial process.
+
+\citet{chisholm2009} relate the shape and size of a plot to the $m$
+immigration parameter of NTB. In the process they derive scaling for
+the SAD which they find goes from ZSM at small scale to logseries at
+large scale. They do not discuss the same nuance as
+\citet{rosindell2013}
+
+\citet{green2007} present a sampling theory for SADs based on random
+sampling (Poisson) or aggregated sampling (negative binomial). They
+confirm that random sampling preserves the shape of the SAD while
+aggregated sampling can interestingly often lead to something close to
+Fisher-looking.
+
+\citet{harte1999} derive self-similar scaling of SAR and SAD
+\citep[but see][who says they did it wrong for SAD]{pueyo2006}.
+
+\citet{hubbell2008} show power law scaling between nearest neighbor
+distance and rank of distance (this all in an effort to estimate
+number and abundance of tree species in Amazonia). Power exponant
+$>0.5$ indicates non-Poisson aggregation.  Some of these results might
+also show up in Harte's MaxEnt book.
+
+\citet{mcgill2003} argues that log right-skewed distributins,
+e.g. Fisher logseries, are sampling artifacts, that taking a small
+subsample of any large community will result in log right-skew. Does
+does this mostly with simulation without considering spatial
+aggregation; but he also uses BCI, without much discussing it. Also
+misses the fact that Poisson sampling (as he does in ``Model I'') will
+preserve the parametric form of the SAD, so skewness might not be the
+thing to look at, rather the parametric form could be more
+informative.
+
+\citet{myers2015} use burnt and unburnt plots to look at how
+disturbance influences turnover. Use spatial and non-spatial
+rarefaction to conclude that disturbance changes $\beta$-diversity
+patterns but not underlying processes.
+
+\citet{plotkin2000} show that power-law SAR is wrong from scales of 1
+m$^2$--50 ha (in the process of estimating species richness for
+tropical trees).  Also show that upscaling SADs (various models) to
+get species estimates generally lead to over-estimate of S at 50 ha
+scale for Pasoh.  Must be assuming poisson spatial process, because no
+other process is mentioned.
+
+\citet{pueyo2006} re-derives self-similar SAR and SAD, showing a
+power-law SAD leads to a power-law SAR.  He does not consider how SAR
+will scale with area, we're left to assume it's the same shape
+everywhere.
+
+\citet{rosindell2013} explore scaling of the NTB.  They find a
+tri-phasic accumulation of singleton species---first increasing with
+area, then decreasing, then increasing again.  This pattern depends on
+on the biogeoraphic range of the species considered---a qunatity
+determined by specieation rate and dispersal kernal.  This finding
+ties in with scale collapes of tri-phasic SAR (Harte and Storch).
+
+\citet{stegen2013} show that $\beta$-diversity is driven both by
+sampling and deterministic interactions with environment---namely
+heterogeneity and primary productivity.  The do this with BBS.
+
+
+\bibliographystyle{plainnat}
+\bibliography{sadScaling.bib}
+
+\end{document}
+
+
+

@@ -1,0 +1,85 @@
+\begin{thebibliography}{11}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Borda-de {\'A}gua et~al.(2012)Borda-de {\'A}gua, Borges, Hubbell, and
+  Pereira]{bordaDeAgua2012}
+Lu{\'\i}s Borda-de {\'A}gua, Paulo~AV Borges, Stephen~P Hubbell, and Henrique~M
+  Pereira.
+\newblock Spatial scaling of species abundance distributions.
+\newblock \emph{Ecography}, 35\penalty0 (6):\penalty0 549--556, 2012.
+
+\bibitem[Chisholm and Lichstein(2009)]{chisholm2009}
+Ryan~A Chisholm and Jeremy~W Lichstein.
+\newblock Linking dispersal, immigration and scale in the neutral theory of
+  biodiversity.
+\newblock \emph{Ecology Letters}, 12\penalty0 (12):\penalty0 1385--1393, 2009.
+
+\bibitem[Green and Plotkin(2007)]{green2007}
+Jessica~L Green and Joshua~B Plotkin.
+\newblock A statistical theory for sampling species abundances.
+\newblock \emph{Ecology letters}, 10\penalty0 (11):\penalty0 1037--1045, 2007.
+
+\bibitem[Harte et~al.(1999)Harte, Kinzig, and Green]{harte1999}
+John Harte, Ann Kinzig, and Jessica Green.
+\newblock Self-similarity in the distribution and abundance of species.
+\newblock \emph{Science}, 284\penalty0 (5412):\penalty0 334--336, 1999.
+
+\bibitem[Hubbell et~al.(2008)Hubbell, He, Condit, Borda-de {\'A}gua, Kellner,
+  and ter Steege]{hubbell2008}
+Stephen~P Hubbell, Fangliang He, Richard Condit, Lu{\'\i}s Borda-de {\'A}gua,
+  James Kellner, and Hans ter Steege.
+\newblock How many tree species are there in the amazon and how many of them
+  will go extinct?
+\newblock \emph{Proceedings of the National Academy of Sciences}, 105\penalty0
+  (Supplement 1):\penalty0 11498--11504, 2008.
+
+\bibitem[McGill(2003)]{mcgill2003}
+Brian~J McGill.
+\newblock Does mother nature really prefer rare species or are log-left-skewed
+  sads a sampling artefact?
+\newblock \emph{Ecology Letters}, 6\penalty0 (8):\penalty0 766--773, 2003.
+
+\bibitem[Myers et~al.(2015)Myers, Chase, Crandall, and Jim{\'e}nez]{myers2015}
+Jonathan~A Myers, Jonathan~M Chase, Raelene~M Crandall, and Iv{\'a}n
+  Jim{\'e}nez.
+\newblock Disturbance alters beta-diversity but not the relative importance of
+  community assembly mechanisms.
+\newblock \emph{Journal of Ecology}, 103\penalty0 (5):\penalty0 1291--1299,
+  2015.
+
+\bibitem[Plotkin et~al.(2000)Plotkin, Potts, Douglas, Bunyavejchewin, Condit,
+  Foster, Hubbell, LaFrankie, Manokaran, Seng, et~al.]{plotkin2000}
+Joshua~B Plotkin, Matthew~D Potts, W~Yu Douglas, Sarayudh Bunyavejchewin,
+  Richard Condit, Robin Foster, Stephen Hubbell, James LaFrankie, N~Manokaran,
+  Lee~Hua Seng, et~al.
+\newblock Predicting species diversity in tropical forests.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 97\penalty0
+  (20):\penalty0 10850--10854, 2000.
+
+\bibitem[Pueyo(2006)]{pueyo2006}
+Salvador Pueyo.
+\newblock Self-similarity in species--area relationship and in species
+  abundance distribution.
+\newblock \emph{Oikos}, 112\penalty0 (1):\penalty0 156--162, 2006.
+
+\bibitem[Rosindell and Cornell(2013)]{rosindell2013}
+James Rosindell and Stephen~J Cornell.
+\newblock Universal scaling of species-abundance distributions across multiple
+  scales.
+\newblock \emph{Oikos}, 122\penalty0 (7):\penalty0 1101--1111, 2013.
+
+\bibitem[Stegen et~al.(2013)Stegen, Freestone, Crist, Anderson, Chase, Comita,
+  Cornell, Davies, Harrison, Hurlbert, et~al.]{stegen2013}
+James~C Stegen, Amy~L Freestone, Thomas~O Crist, Marti~J Anderson, Jonathan~M
+  Chase, Liza~S Comita, Howard~V Cornell, Kendi~F Davies, Susan~P Harrison,
+  Allen~H Hurlbert, et~al.
+\newblock Stochastic and deterministic drivers of spatial and temporal turnover
+  in breeding bird communities.
+\newblock \emph{Global Ecology and Biogeography}, 22\penalty0 (2):\penalty0
+  202--212, 2013.
+
+\end{thebibliography}
