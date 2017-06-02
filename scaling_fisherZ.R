@@ -6,14 +6,14 @@ library(raster)
 
 setwd('~/Dropbox/Research/maxentConcept')
 
-# ## source hidden function from meteR to deal with areas
-# source('~/Dropbox/Research/meteR/R/sar_helper_funs.R')
+## source hidden function from meteR to deal with areas
+source('~/Dropbox/Research/meteR/R/sar_helper_funs.R')
 
 ## wd storing the data
 dataWD <- '~/Dropbox/Research/data/stri'
 
 ## read in data
-x <- read.csv(file.path(dataWD, list.files(dataWD)[1]), as.is = TRUE)
+x <- read.csv(file.path(dataWD, list.files(dataWD)[2]), as.is = TRUE)
 
 ## get most recent census
 x <- x[x$year == max(x$year), ]
@@ -28,38 +28,49 @@ scaleZ <- function(x) {
                 ymn = 0, ymx = ceiling(max(x$y)))
     
     ## determine range of scales
-    scales <- 2^(2:floor(log(min(max(xmax(r), ymax(r)) / 2, 
-                                 min(xmax(r), ymax(r))), base = 2)))
+    scales <- determineScale(r)
     
     ## loop over scales, cutting data by re-scaled raster and calculating SAD z-values
-    out <- lapply(scales, function(s) {
-        res(r) <- s
-        
-        ## within a scale, loop over cells to calcuate SAD z-values within each
-        
-        cells <- cellFromXY(r, xy = x[, c('x', 'y')])
-        cells[is.na(cells)] <- -1 # avoid issues with NA when matching below
-        cellsPerm <- sample(cells) # permuted cells
-        
-        zz <- mclapply(unique(cells[cells > 0]), mc.cores = 6, function(i) {
-            newx <- x[cells == i, ]
-            abund <- tapply(newx$count, newx$spp, sum)
+    out <- lapply(1:nrow(scales), function(s) {
+        if(s == 1) {
+            abund <- tapply(x$count, x$spp, sum)
             thisSAD <- sad(abund, 'fish', keepData = TRUE)
-            z <- calcZ(x, cells, i)
-            zPerm <- calcZ(x, cellsPerm, i)
-            return(c(z, zPerm))
-        })
-        
-        zz <- do.call(rbind, zz)
-        
-        ## return averaged z vales
-        return(c(zMean = mean(zz[, 1]), zCI = quantile(zz[, 1], c(0, 0.95), 
-                                                       names = FALSE), 
-                 zPermMean = mean(zz[, 2]), zPermCI = quantile(zz[, 2], c(0, 0.95), 
-                                                               names = FALSE)))
+            
+            return(c(zMean = logLikZ(thisSAD)$z, zCI = rep(NA, 2), 
+                     zPermMean = NA, zPermCI = rep(NA, 2)))
+        } else {
+            ## rescale
+            res(r) <- scales[s, ]
+            
+            ## within a scale, loop over cells to calcuate SAD z-values within each
+            
+            cells <- cellFromXY(r, xy = x[, c('x', 'y')])
+            # cells[is.na(cells)] <- -1 # avoid issues with NA when matching below
+            cellsPerm <- sample(cells) # permuted cells
+            
+            # zz <- mclapply(unique(cells[cells > 0]), mc.cores = 6, function(i) {
+            zz <- mclapply(unique(cells), mc.cores = 6, function(i) {
+                newx <- x[cells == i, ]
+                abund <- tapply(newx$count, newx$spp, sum)
+                thisSAD <- sad(abund, 'fish', keepData = TRUE)
+                z <- calcZ(x, cells, i)
+                zPerm <- calcZ(x, cellsPerm, i)
+                return(c(z, zPerm))
+            })
+            
+            zz <- do.call(rbind, zz)
+            
+            
+            ## return averaged z vales
+            return(c(zMean = mean(zz[, 1]), zCI = quantile(zz[, 1], c(0, 0.95), 
+                                                           names = FALSE), 
+                     zPermMean = mean(zz[, 2]), zPermCI = quantile(zz[, 2], c(0, 0.95), 
+                                                                   names = FALSE)))
+        }
     })
     
-    out <- cbind(scale = scales, do.call(rbind, out))
+    ## return scale as area, and z-value summary
+    out <- cbind(scale = scales[, 1] * scales[, 2], do.call(rbind, out))
     
     return(out)
 }
@@ -72,4 +83,22 @@ calcZ <- function(x, cells, i) {
     return(logLikZ(thisSAD)$z)
 }
 
+## helper function to determine scale for raster of plot
+## note: scale (or resolution) must be a multiple of each dimension of the plot
+## to work easily, so just scale each side independently
+determineScale <- function(r) {
+    xmx <- xmax(r)
+    ymx <- ymax(r)
+    
+    ## target minimum area
+    targetArea <- 16
+    
+    ## number of halvings allowed by dimensions of plot
+    n <- floor(log(targetArea / (xmx * ymx)) / (-2 * log(2)))
+    
+    return(cbind(xmx * 2^-(0:n), ymx * 2^-(0:n)))
+}
+
 foo <- scaleZ(x)
+
+plot(foo[, 1:2], log = 'x')
