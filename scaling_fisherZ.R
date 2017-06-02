@@ -1,69 +1,75 @@
-setwd('~/Dropbox/Research/maxentConcept')
-
-library(meteR)
+library(pika)
 library(parallel)
 library(socorro)
-library(plyr)
+library(sp)
+library(raster)
 
-## source hidden function from meteR to deal with areas
-source('~/Dropbox/Research/meteR/R/sar_helper_funs.R')
+setwd('~/Dropbox/Research/maxentConcept')
+
+# ## source hidden function from meteR to deal with areas
+# source('~/Dropbox/Research/meteR/R/sar_helper_funs.R')
 
 ## wd storing the data
 dataWD <- '~/Dropbox/Research/data/stri'
 
-## z-values for SADs across scales, for all plots
-scaleZ <- mclapply(list.files(dataWD), mc.cores = 6, function(f) {
-    x <- read.csv(file.path(dataWD, f), as.is = TRUE)
-    ## only look at most recent census
-    x <- x[x$year == max(x$year), ]
+## read in data
+x <- read.csv(file.path(dataWD, list.files(dataWD)[1]), as.is = TRUE)
+
+## get most recent census
+x <- x[x$year == max(x$year), ]
+
+## function to take plot data, divide it up across scales, and caluclate
+## summaries of z-values across scale
+
+scaleZ <- function(x) {
+    ## make raster object for plot
+    r <- raster(ncols = ceiling(max(x$x)), nrows = ceiling(max(x$y)), 
+                xmn = 0, xmx = ceiling(max(x$x)), 
+                ymn = 0, ymx = ceiling(max(x$y)))
     
-    ## logrithmic intervals for scaling back area
-    xscale <- round(max(x$x)) * 2^(-4:0)
-    yscale <- round(max(x$y)) * 2^(-4:0)
+    ## determine range of scales
+    scales <- 2^(2:floor(log(min(max(xmax(r), ymax(r)) / 2, 
+                                 min(xmax(r), ymax(r))), base = 2)))
     
-    ## loop over scales and calculate sad
-    out <- lapply(1:length(xscale), function(i) {
-        newx <- x[x$x <= xscale[i] & x$y <= yscale[i], ]
-        thisSAD <- sad(meteESF(newx$spp, newx$count, newx$dbh^2))
-        thisZ <- logLikZ(thisSAD, nrep = 499)$z
+    ## loop over scales, cutting data by re-scaled raster and calculating SAD z-values
+    out <- lapply(scales, function(s) {
+        res(r) <- s
         
-        return(list(sad = thisSAD, z = thisZ))
+        ## within a scale, loop over cells to calcuate SAD z-values within each
+        
+        cells <- cellFromXY(r, xy = x[, c('x', 'y')])
+        cells[is.na(cells)] <- -1 # avoid issues with NA when matching below
+        cellsPerm <- sample(cells) # permuted cells
+        
+        zz <- mclapply(unique(cells[cells > 0]), mc.cores = 6, function(i) {
+            newx <- x[cells == i, ]
+            abund <- tapply(newx$count, newx$spp, sum)
+            thisSAD <- sad(abund, 'fish', keepData = TRUE)
+            z <- calcZ(x, cells, i)
+            zPerm <- calcZ(x, cellsPerm, i)
+            return(c(z, zPerm))
+        })
+        
+        zz <- do.call(rbind, zz)
+        
+        ## return averaged z vales
+        return(c(zMean = mean(zz[, 1]), zCI = quantile(zz[, 1], c(0, 0.95), 
+                                                       names = FALSE), 
+                 zPermMean = mean(zz[, 2]), zPermCI = quantile(zz[, 2], c(0, 0.95), 
+                                                               names = FALSE)))
     })
     
-    areas <- xscale * yscale
-    names(out) <- paste('area', areas, sep = '')
+    out <- cbind(scale = scales, do.call(rbind, out))
     
     return(out)
-})
-
-names(scaleZ) <- gsub('.csv', '', list.files(dataWD))
-
-
-## plotting
-
-pdf('fig_scalingSAD.pdf', width = 7, height = 15)
-mat <- matrix(as.vector(outer(c(1:length(scaleZ[[1]]), 
-                                rep(length(scaleZ[[1]]) + 1, length(scaleZ[[1]]))), 
-                              (0:(length(scaleZ) - 1)) * (length(scaleZ[[1]])+1), '+')), 
-              nrow = length(scaleZ)*2, byrow = TRUE)
-
-layout(mat, heights = rep(c(2, 1.5), length(scaleZ)))
-par(oma = c(2, 0, 1, 2))
-
-for(i in 1:length(scaleZ)) {
-    par(mar = rep(0.1, 4))
-    for(j in 1:length(scaleZ[[i]])) {
-        plot(scaleZ[[i]][[j]]$sad, ptype = 'rad', log = 'y', add.legend = FALSE, 
-             axes = FALSE, frame.plot = TRUE)
-    }
-    
-    mtext(names(scaleZ)[i], side = 4, line = 1, xpd = NA)
-    
-    par(mar = c(3, 0.1, 0.1, 0.1))
-    zz <- sapply(scaleZ[[i]], function(x) x$z)
-    aa <- as.numeric(gsub('area', '', names(zz)))
-    plot(aa, zz, type = 'b', log = 'x', ylim = c(0, ifelse(max(zz) > 5, max(zz), 5)))
-    abline(h = 4)
 }
 
-dev.off()
+## helper function to subset data by cell and calculate z-vals
+calcZ <- function(x, cells, i) {
+    newx <- x[cells == i, ]
+    abund <- tapply(newx$count, newx$spp, sum)
+    thisSAD <- sad(abund, 'fish', keepData = TRUE)
+    return(logLikZ(thisSAD)$z)
+}
+
+foo <- scaleZ(x)
