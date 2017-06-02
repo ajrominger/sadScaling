@@ -12,11 +12,17 @@ source('~/Dropbox/Research/meteR/R/sar_helper_funs.R')
 ## wd storing the data
 dataWD <- '~/Dropbox/Research/data/stri'
 
-## read in data
-x <- read.csv(file.path(dataWD, list.files(dataWD)[2]), as.is = TRUE)
-
-## get most recent census
-x <- x[x$year == max(x$year), ]
+## loop over data, computing z scaling for all
+allZ <- lapply(list.files(dataWD), function(f) {
+    ## read in data
+    x <- read.csv(file.path(dataWD, list.files(dataWD)[2]), as.is = TRUE)
+    
+    ## get most recent census
+    x <- x[x$year == max(x$year), ]
+    
+    ## get data.frame of z value scaling
+    return(scaleZ(x))
+})
 
 ## function to take plot data, divide it up across scales, and caluclate
 ## summaries of z-values across scale
@@ -70,7 +76,7 @@ scaleZ <- function(x) {
     })
     
     ## return scale as area, and z-value summary
-    out <- cbind(scale = scales[, 1] * scales[, 2], do.call(rbind, out))
+    out <- data.frame(scale = scales[, 1] * scales[, 2], do.call(rbind, out))
     
     return(out)
 }
@@ -101,4 +107,24 @@ determineScale <- function(r) {
 
 foo <- scaleZ(x)
 
-plot(foo[, 1:2], log = 'x')
+## function to graph one plot's worth of scaling
+plotScaleZ <- function(z, ...) {
+    jitterScale <- z$scale*1.2
+    
+    lwd <- 2
+    cex <- 1.5
+    permCol <- 'gray60'
+    
+    plot(z$scale, z$zMean, log = 'xy',
+         panel.first = {
+             lines(jitterScale, z$zPermMean, col = permCol, lwd = lwd)
+             segments(x0 = jitterScale, y0 = z$zPermCI1, y1 = z$zPermCI2, col = permCol)
+             points(jitterScale, z$zPermMean, pch = 21, col = permCol, bg = 'white', cex = cex)
+             lines(z$scale, z$zMean, lwd = lwd)
+             segments(x0 = z$scale, y0 = z$zCI1, y1 = z$zCI2)
+         }, ylim = range(z[, -1], na.rm = TRUE), 
+         pch = 16, cex = cex, ...)
+}
+
+plotScaleZ(foo)
+
