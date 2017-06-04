@@ -4,7 +4,7 @@ library(socorro)
 library(sp)
 library(raster)
 
-setwd('~/Dropbox/Research/maxentConcept')
+setwd('~/Dropbox/Research/sadScaling')
 
 ## source hidden function from meteR to deal with areas
 source('~/Dropbox/Research/meteR/R/sar_helper_funs.R')
@@ -93,24 +93,6 @@ determineScale <- function(r) {
     return(cbind(xmx * 2^-(0:n), ymx * 2^-(0:n)))
 }
 
-## function to graph one plot's worth of scaling
-plotScaleZ <- function(z, ...) {
-    jitterScale <- z$scale*1.2
-    
-    lwd <- 2
-    cex <- 1.5
-    permCol <- 'gray60'
-    
-    plot(z$scale, z$zMean, log = 'xy',
-         panel.first = {
-             lines(jitterScale, z$zPermMean, col = permCol, lwd = lwd)
-             segments(x0 = jitterScale, y0 = z$zPermCI1, y1 = z$zPermCI2, col = permCol)
-             points(jitterScale, z$zPermMean, pch = 21, col = permCol, bg = 'white', cex = cex)
-             lines(z$scale, z$zMean, lwd = lwd)
-             segments(x0 = z$scale, y0 = z$zCI1, y1 = z$zCI2)
-         }, ylim = range(z[, -1], na.rm = TRUE), 
-         pch = 16, cex = cex, ...)
-}
 
 ## loop over data, computing z scaling for all
 allZ <- lapply(list.files(dataWD), function(f) {
