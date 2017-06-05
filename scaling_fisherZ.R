@@ -6,9 +6,6 @@ library(raster)
 
 setwd('~/Dropbox/Research/sadScaling')
 
-## source hidden function from meteR to deal with areas
-source('~/Dropbox/Research/meteR/R/sar_helper_funs.R')
-
 ## wd storing the data
 dataWD <- '~/Dropbox/Research/data/stri'
 
@@ -43,10 +40,8 @@ scaleZ <- function(x) {
             cellsPerm <- sample(cells) # permuted cells
 
             # zz <- mclapply(unique(cells[cells > 0]), mc.cores = 6, function(i) {
-            zz <- mclapply(unique(cells), mc.cores = 6, function(i) {
+            zz <- mclapply(unique(cells), mc.cores = 6, FUN = function(i) {
                 newx <- x[cells == i, ]
-                abund <- tapply(newx$count, newx$spp, sum)
-                thisSAD <- sad(abund, 'fish', keepData = TRUE)
                 z <- calcZ(x, cells, i)
                 zPerm <- calcZ(x, cellsPerm, i)
                 return(c(z, zPerm))
