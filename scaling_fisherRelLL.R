@@ -1,6 +1,7 @@
 library(pika)
 library(socorro)
 library(raster)
+library(parallel)
 
 setwd('~/Dropbox/Research/sadScaling')
 
@@ -22,14 +23,14 @@ scaleRelLL <- function(x) {
     scales <- determineScale(r)
     
     ## loop over scales, cutting data by re-scaled raster and calculating SAD z-values
-    out <- lapply(1:nrow(scales), function(s) {
+    out <- mclapply(1:nrow(scales), mc.cores = 6, FUN = function(s) {
         if(s == 1) {
-            # abund <- tapply(x$count, x$spp, sum)
-            # thisSAD <- sad(abund, 'fish', keepData = TRUE)
-            # 
-            # return(c(zMean = logLikZ(thisSAD)$z, zCI = rep(NA, 2),
-            #          zPermMean = NA, zPermCI = rep(NA, 2)))
-            return(NULL)
+            abund <- tapply(x$count, x$spp, sum)
+            thisSAD <- sad(abund, 'fish')
+            st <- sampTrans(abund, sad(abund), sum(abund), include0 = FALSE, log = TRUE)
+            
+            return(c(llMean = logLik(thisSAD) - sum(st), llCI = rep(NA, 2),
+                     llPermMean = NA, llPermCI = rep(NA, 2)))
         } else {
             ## rescale
             res(r) <- scales[s, ]
@@ -41,20 +42,18 @@ scaleRelLL <- function(x) {
             cellsPerm <- sample(cells) # permuted cells
             
             ll <- lapply(unique(cells), FUN = function(i) {
-                browser()
                 ll <- calcLL(x, cells, i)
-                zPerm <- calcZ(x, cellsPerm, i)
-                return(c(z, zPerm))
+                llPerm <- calcLL(x, cellsPerm, i)
+                return(c(ll, llPerm))
             })
             
-            zz <- do.call(rbind, zz)
-            
+            ll <- do.call(rbind, ll)
             
             ## return averaged z vales
-            return(c(zMean = mean(zz[, 1]), zCI = quantile(zz[, 1], c(0, 0.95),
-                                                           names = FALSE),
-                     zPermMean = mean(zz[, 2]), zPermCI = quantile(zz[, 2], c(0, 0.95),
-                                                                   names = FALSE)))
+            return(c(llMean = mean(ll[, 1] - ll[, 2]), 
+                     llCI = quantile(ll[, 1] - ll[, 2], c(0, 0.95), names = FALSE),
+                     llPermMean = mean(ll[, 3] - ll[, 4]), 
+                     llPermCI = quantile(ll[, 3] - ll[, 4], c(0, 0.95), names = FALSE)))
         }
     })
     
@@ -92,4 +91,5 @@ determineScale <- function(r) {
     return(cbind(xmx * 2^-(0:n), ymx * 2^-(0:n)))
 }
 
-scaleRelLL(bci)
+bciScaleRelLL <- scaleRelLL(bci)
+write.csv(bciScaleRelLL, 'scaling_fisherRelLL_BCI.csv')
