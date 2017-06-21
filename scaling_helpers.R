@@ -9,10 +9,9 @@ library(raster)
 ## metrics across scales
 #' @param x is the data
 #' @param fun is a function returning the metric of interest
-#' @param mod is the model to be fit
 #' @param perm is a logical indicating whether to compute the metric on permuted cells
 
-scaleMetric <- function(x, fun, mod = 'fish', perm = TRUE) {
+scaleMetric <- function(x, fun, perm = TRUE) {
     ## make raster object for plot
     r <- raster(ncols = ceiling(max(x$x)), nrows = ceiling(max(x$y)), 
                 xmn = 0, xmx = ceiling(max(x$x)), 
@@ -20,40 +19,46 @@ scaleMetric <- function(x, fun, mod = 'fish', perm = TRUE) {
     
     ## determine range of scales
     scales <- determineScale(r)
+    # browser()
     
     ## loop over scales, cutting data by re-scaled raster and calculating SAD z-values
-    out <- mclapply(1:nrow(scales), mc.cores = 6, FUN = function(s) {
+    out <- lapply(1:nrow(scales), function(s) {
         ## rescale
         res(r) <- scales[s, ]
+        print(s)
         
         ## within a scale, loop over cells to calcuate SAD z-values within each
         
         cells <- cellFromXY(r, xy = x[, c('x', 'y')])
         cellsPerm <- sample(cells) # permuted cells
         
-        allM <- lapply(unique(cells), FUN = function(i) {
-            m <- calcAtCell(x, cells, i)
+        ## make sure we're never sampling more than 2^(10 - 4) == 64 cells
+        if(s > 4) {
+            theseCells <- sample(unique(cells), 64)
+        } else {
+            theseCells <- unique(cells)
+        }
+        
+        allM <- lapply(theseCells, FUN = function(i) {
+            m <- calcAtCell(x, cells, i, fun)
             
             if(s == 1 | !perm) {
                 mPerm <- m
             } else {
-                mPerm <- calcAtCell(x, cellsPerm, i)
+                mPerm <- calcAtCell(x, cellsPerm, i, fun)
             }
             
-            return(c(m, mPerm))
+            return(c(m, perm = mPerm))
         })
         
-        allM <- do.call(rbind, ll)
+        allM <- do.call(rbind, allM)
         
-        ## return averaged metric vales
-        return(c(mean = mean(allM[, 1]), 
-                 ci = quantile(allM[, 1], c(0, 0.95), names = FALSE),
-                 mPermMean = mean(allM[, 2]), 
-                 mPermCI = quantile(allM[, 2], c(0, 0.95), names = FALSE)))
+        ## return scale and metric values
+        return(cbind(scale = prod(scales[s, ]), allM))
     })
     
     ## return scale as area, and metric summary
-    out <- data.frame(scale = scales[, 1] * scales[, 2], do.call(rbind, out))
+    out <- as.data.frame(do.call(rbind, out))
     
     return(out)
 }
@@ -63,15 +68,12 @@ scaleMetric <- function(x, fun, mod = 'fish', perm = TRUE) {
 #' @param x is the data
 #' @param cells is a matrix of cell IDs
 #' @param i is the row in `cells` indicating the cell of interest
+#' @param fun is the function to calculate the metric
 
-calcAtCell <- function(x, cells, i) {
+calcAtCell <- function(x, cells, i, fun) {
     newx <- x[cells == i, ]
-    abund <- tapply(newx$count, newx$spp, sum)
-    llF <- logLik(sad(abund, 'fish'))
-    llST <- sum(sampTrans(abund, sad(tapply(x$count, x$spp, sum)), nrow(newx), 
-                          include0 = FALSE, log = TRUE))
     
-    return(c(llF, llST))
+    return(fun(x, newx))
 }
 
 
