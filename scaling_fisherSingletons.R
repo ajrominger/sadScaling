@@ -23,9 +23,11 @@ singleton <- function(x, newx) {
 }
 
 ## calculate singletons across scales
-singScale <- scaleMetric(bci, singleton)
+singScaleBCI <- scaleMetric(bci, singleton)
+singScalePASO <- scaleMetric(paso, singleton)
+singScale <- rbind(cbind(site = 'BCI', singScaleBCI), cbind(site = 'PASO', singScalePASO))
 
-singScaleSumm <- ddply(singScale, 'scale', function(x) {
+singScaleSumm <- ddply(singScale, c('site', 'scale'), function(x) {
     out <- c(colMeans(x[, -1]), 
              as.vector(apply(x[, -1], 2, quantile, probs = c(0.025, 0.975))))
     names(out) <- c(names(out)[1:4], 
