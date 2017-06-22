@@ -4,6 +4,7 @@
 
 library(pika)
 library(raster)
+library(parallel)
 
 ## function to take plot data, divide it up across scales, and caluclate
 ## metrics across scales
@@ -22,19 +23,19 @@ scaleMetric <- function(x, fun, perm = TRUE) {
     # browser()
     
     ## loop over scales, cutting data by re-scaled raster and calculating SAD z-values
-    out <- lapply(1:nrow(scales), function(s) {
+    out <- mclapply(1:nrow(scales), mc.cores = 6, FUN = function(s) {
         ## rescale
         res(r) <- scales[s, ]
-        print(s)
+        # print(s)
         
         ## within a scale, loop over cells to calcuate SAD z-values within each
         
         cells <- cellFromXY(r, xy = x[, c('x', 'y')])
         cellsPerm <- sample(cells) # permuted cells
         
-        ## make sure we're never sampling more than 2^(10 - 4) == 64 cells
-        if(s > 4) {
-            theseCells <- sample(unique(cells), 64)
+        ## make sure we're never sampling more than 2^5 cells
+        if(s > 6) {
+            theseCells <- sample(unique(cells), 2^5)
         } else {
             theseCells <- unique(cells)
         }
@@ -85,12 +86,34 @@ calcAtCell <- function(x, cells, i, fun) {
 determineScale <- function(r) {
     xmx <- xmax(r)
     ymx <- ymax(r)
-    
+    xIsMax <- xmx >= ymx
+
     ## target minimum area
     targetArea <- 10
-    
+
     ## number of halvings allowed by dimensions of plot
-    n <- floor(log(targetArea / (xmx * ymx)) / (-2 * log(2)))
-    
-    return(cbind(xmx * 2^-(0:n), ymx * 2^-(0:n)))
+    n <- floor((log(xmx * ymx) - log(targetArea)) / log(2) / 2)
+
+    s <- rep(0:n, each = 2)
+
+    if(xIsMax) {
+        return(cbind(xmx / 2^c(0, rep(1:n, each = 2)),
+                     ymx / 2^rep(0:n, each = 2)[-(n+1)*2]))
+    } else {
+        return(cbind(xmx / 2^rep(0:n, each = 2)[-(n+1)*2],
+                     ymx / 2^c(0, rep(1:n, each = 2))))
+    }
 }
+
+# determineScale <- function(r) {
+#     xmx <- xmax(r)
+#     ymx <- ymax(r)
+# 
+#     ## target minimum area
+#     targetArea <- 10
+# 
+#     ## number of halvings allowed by dimensions of plot
+#     n <- floor(log(targetArea / (xmx * ymx)) / (-2 * log(2)))
+# 
+#     return(cbind(xmx * 2^-(0:n), ymx * 2^-(0:n)))
+# }
