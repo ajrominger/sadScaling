@@ -1,0 +1,134 @@
+---
+title: "Different approaches to scaling SAD and the logseries"
+author: "A. J. Rominger"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+## packages
+library(socorro)
+
+## source helper funs
+source('scaling_helpers.R')
+
+## load data
+bci <- read.csv('../data/stri/BCIS.csv', as.is = TRUE)
+bci <- bci[bci$year == max(bci$year), ]
+
+paso <- read.csv('../data/stri/PASO.csv', as.is = TRUE)
+paso <- paso[paso$year == max(paso$year), ]
+```
+
+# Intro to scaling
+
+How we do the scaling
+
+```{r}
+## calcualte scaling for the two datasets and show plot of colors onto scales
+```
+
+# Scaling z-score
+
+# Scaling relative log likelihood
+
+```{r}
+bciScaleRelLL <- read.csv('scaling_fisherRelLL_BCI.csv', as.is = TRUE)
+head(bciScaleRelLL)
+with(bciScaleRelLL, {
+    plot(scale, sign(llMean) * abs(llMean)^0.5, log = 'x',
+         ylim = c(-1, 1) * max(abs(llMean), abs(llPermMean), na.rm = TRUE)^0.5, 
+         type = 'b')
+    points(scale, sign(llPermMean) * abs(llPermMean)^0.5, col = 'red', type = 'b')
+})
+```
+
+# Scaling singletons
+
+```{r}
+singScaleSumm <- read.csv('scaling_fisherSingletons.csv', as.is = TRUE)
+
+col <- quantCol(singScaleSumm$scale, 
+                pal = hsv(c(0.12, 0.6, 1), c(0.8, 1, 1), c(0.8, 0.8, 0.7)), 
+                trans = 'log')
+
+par(mfrow = c(1, 2), mar = c(0, 0, 2, 0) + 0.5, 
+    oma = c(3, 3, 1, 1), mgp = c(2, 0.75, 0))
+
+plot(singScaleSumm$n1fish, singScaleSumm$n1obs, pch = 16,
+     col = col, panel.first = {
+         lines(singScaleSumm$n1fish, singScaleSumm$n1obs, lty = 2, col = 'gray')
+         segments(x0 = singScaleSumm$n1fish, 
+                  y0 = singScaleSumm$n1obs.ci1, y1 = singScaleSumm$n1obs.ci2, 
+                  col = col)
+         segments(x0 = singScaleSumm$n1fish.ci1, x1 = singScaleSumm$n1fish.ci2, 
+                  y0 = singScaleSumm$n1obs, 
+                  col = col)
+     }, 
+     xlim = range(singScaleSumm[, grepl('n1fish', names(singScaleSumm))]), 
+     ylim = range(singScaleSumm[, grepl('n1obs', names(singScaleSumm))]))
+abline(0, 1)
+mtext('Spatial subset', side = 3, outer = FALSE, line = 0)
+
+plot(singScaleSumm$perm.n1fish, singScaleSumm$perm.n1obs, pch = 16,
+     col = col, 
+     panel.first = {
+         lines(singScaleSumm$perm.n1fish, singScaleSumm$perm.n1obs, lty = 2, col = 'gray')
+         segments(x0 = singScaleSumm$perm.n1fish, 
+                  y0 = singScaleSumm$perm.n1obs.ci1, y1 = singScaleSumm$perm.n1obs.ci2, 
+                  col = col)
+         segments(x0 = singScaleSumm$perm.n1fish.ci1, x1 = singScaleSumm$perm.n1fish.ci2, 
+                  y0 = singScaleSumm$perm.n1obs, 
+                  col = col)
+     }, 
+     yaxt = 'n',
+     xlim = range(singScaleSumm[, grepl('perm.n1fish', names(singScaleSumm))]), 
+     ylim = range(singScaleSumm[, grepl('perm.n1obs', names(singScaleSumm))]))
+abline(0, 1)
+
+mtext('Random subset', side = 3, outer = FALSE, line = 0)
+
+mtext('Logseries-predicted singletons', side = 1, outer = TRUE, line = 1.5)
+mtext('Observed singletons', side = 2, outer = TRUE, line = 1.5)
+
+par(mfrow = c(1, 2), mar = c(0, 0, 2, 0) + 0.5, 
+    oma = c(3, 3, 1, 1), mgp = c(2, 0.75, 0))
+
+plot(singScaleSumm$n1obs, singScaleSumm$perm.n1obs, pch = 16,
+     col = col, panel.first = {
+         lines(singScaleSumm$n1obs, singScaleSumm$perm.n1obs, lty = 2, col = 'gray')
+         segments(x0 = singScaleSumm$n1obs, 
+                  y0 = singScaleSumm$perm.n1obs.ci1, y1 = singScaleSumm$perm.n1obs.ci2, 
+                  col = col)
+         segments(x0 = singScaleSumm$n1obs.ci1, x1 = singScaleSumm$n1obs.ci2, 
+                  y0 = singScaleSumm$perm.n1obs, 
+                  col = col)
+     }, 
+     xlim = range(singScaleSumm[, grepl('n1obs', names(singScaleSumm)) & 
+                                    !grepl('perm', names(singScaleSumm))]), 
+     ylim = range(singScaleSumm[, grepl('perm.n1obs', names(singScaleSumm))]))
+abline(0, 1)
+mtext('Observed', side = 3, outer = FALSE, line = 0)
+
+plot(singScaleSumm$n1fish, singScaleSumm$perm.n1fish, pch = 16,
+     col = col, panel.first = {
+         lines(singScaleSumm$n1fish, singScaleSumm$perm.n1fish, lty = 2, col = 'gray')
+         segments(x0 = singScaleSumm$n1fish, 
+                  y0 = singScaleSumm$perm.n1fish.ci1, y1 = singScaleSumm$perm.n1fish.ci2, 
+                  col = col)
+         segments(x0 = singScaleSumm$n1fish.ci1, x1 = singScaleSumm$n1fish.ci2, 
+                  y0 = singScaleSumm$perm.n1fish, 
+                  col = col)
+     }, 
+     xlim = range(singScaleSumm[, grepl('n1fish', names(singScaleSumm)) & 
+                                    !grepl('perm', names(singScaleSumm))]), 
+     ylim = range(singScaleSumm[, grepl('perm.n1fish', names(singScaleSumm))]), 
+     yaxt = 'n')
+abline(0, 1)
+mtext('Logseries', side = 3, outer = FALSE, line = 0)
+
+mtext('Singletons in spatial subsets', side = 1, outer = TRUE, line = 1.5)
+mtext('Singletons in random subsets', side = 2, outer = TRUE, line = 1.5)
+```
