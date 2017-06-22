@@ -28,8 +28,8 @@ singScalePASO <- scaleMetric(paso, singleton)
 singScale <- rbind(cbind(site = 'BCI', singScaleBCI), cbind(site = 'PASO', singScalePASO))
 
 singScaleSumm <- ddply(singScale, c('site', 'scale'), function(x) {
-    out <- c(colMeans(x[, -1]), 
-             as.vector(apply(x[, -1], 2, quantile, probs = c(0.025, 0.975))))
+    out <- c(colMeans(x[, -(1:2)]), 
+             as.vector(apply(x[, -(1:2)], 2, quantile, probs = c(0.025, 0.975))))
     names(out) <- c(names(out)[1:4], 
                     paste(rep(names(out)[1:4], each = 2), c('ci1', 'ci2'), sep = '.'))
     return(out)
