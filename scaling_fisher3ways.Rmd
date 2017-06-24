@@ -15,19 +15,44 @@ library(socorro)
 source('scaling_helpers.R')
 
 ## load data
-bci <- read.csv('../data/stri/BCIS.csv', as.is = TRUE)
-bci <- bci[bci$year == max(bci$year), ]
-
-paso <- read.csv('../data/stri/PASO.csv', as.is = TRUE)
-paso <- paso[paso$year == max(paso$year), ]
+# bci <- read.csv('../data/stri/BCIS.csv', as.is = TRUE)
+# bci <- bci[bci$year == max(bci$year), ]
+# 
+# paso <- read.csv('../data/stri/PASO.csv', as.is = TRUE)
+# paso <- paso[paso$year == max(paso$year), ]
 ```
 
 # Intro to scaling
 
 How we do the scaling
 
-```{r}
+```{r, fig.align='center', fig.width=4, fig.height=4}
 ## calcualte scaling for the two datasets and show plot of colors onto scales
+r <- raster(ncols = 1000, nrows = 500, xmn = 0, xmx = 1000, ymn = 0, ymx = 500)
+s <- determineScale(r)
+col <- quantCol(s[, 1] * s[, 2], pal = hsv(c(0.12, 0.6, 0.94), c(0.4, 0.8, 0.7), c(0.8, 0.6, 0.2)), 
+                trans = 'log')
+
+layout(matrix(1:2, nrow = 1), widths = c(2, 1))
+par(mar = rep(0.5, 4))
+plot(1, xlim = c(-100, 1000), ylim = c(-100, 500), type = 'n', asp = 1, axes = FALSE)
+for(i in 1:6) {
+    rect(0, 0, s[i, 1] - (i-1)*10, s[i, 2] - (i-1)*10, lwd = 1, border = 'white', col = col[(i - 1)*2.5 + 1])
+}
+rect(0, 0, s[1, 1], s[1, 2])
+
+par(mar = c(6, 1, 6, 4))
+plot(1, xlim = 0:1, ylim = range(s[, 1] * s[, 2]), log = 'y', 
+     xaxs = 'i', yaxs = 'i', axes = FALSE, 
+     xlab = '', ylab = '')
+rect(xleft = 0, xright = 1, 
+     ybottom = exp(seq(log(prod(s[1, ])), log(prod(s[nrow(s), ])), length.out = 51))[-51],
+     ytop = exp(seq(log(prod(s[1, ])), log(prod(s[nrow(s), ])), length.out = 51))[-1], 
+     border = colorRampPalette(col)(50),
+     col = colorRampPalette(col)(50))
+box()
+logAxis(4, expLab = TRUE)
+mtext(expression('Area ('*m^2*')'), side = 4, line = 2.5)
 ```
 
 # Scaling z-score
