@@ -20,16 +20,13 @@ scaleMetric <- function(x, fun, perm = TRUE) {
     
     ## determine range of scales
     scales <- determineScale(r)
-    # browser()
     
     ## loop over scales, cutting data by re-scaled raster and calculating SAD z-values
     out <- mclapply(1:nrow(scales), mc.cores = 6, FUN = function(s) {
         ## rescale
         res(r) <- scales[s, ]
-        # print(s)
         
         ## within a scale, loop over cells to calcuate SAD z-values within each
-        
         cells <- cellFromXY(r, xy = x[, c('x', 'y')])
         cellsPerm <- sample(cells) # permuted cells
         
@@ -73,7 +70,6 @@ scaleMetric <- function(x, fun, perm = TRUE) {
 
 calcAtCell <- function(x, cells, i, fun) {
     newx <- x[cells == i, ]
-    
     return(fun(x, newx))
 }
 
