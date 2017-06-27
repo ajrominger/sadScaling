@@ -35,9 +35,13 @@ relLLScale <- rbind(cbind(site = 'BCI', relLLScaleBCI), cbind(site = 'PASO', rel
 
 relLLScaleSumm <- ddply(relLLScale, c('site', 'scale'), function(x) {
     out <- c(colMeans(x[, -(1:2)]), 
-             as.vector(apply(x[, -(1:2)], 2, quantile, probs = c(0.025, 0.975))))
-    names(out) <- c(names(out)[1:4], 
-                    paste(rep(names(out)[1:4], each = 2), c('ci1', 'ci2'), sep = '.'))
+             relLL = mean(x[, 3] - x[, 4]), 
+             perm.relLL = mean(x[, 5] - x[, 6]),
+             as.vector(apply(x[, -(1:2)], 2, quantile, probs = c(0.025, 0.975))), 
+             quantile(x[, 3] - x[, 4], probs = c(0.25, 0.975)), 
+             quantile(x[, 5] - x[, 6], probs = c(0.25, 0.975)))
+    names(out) <- c(names(out)[1:6], 
+                    paste(rep(names(out)[1:6], each = 2), c('ci1', 'ci2'), sep = '.'))
     return(out)
 })
 
