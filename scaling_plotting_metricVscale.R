@@ -23,6 +23,8 @@ scalePlot <- function(summ, y, jit = 1, col = 'black', ylim = NULL, add = FALSE,
 }
 
 singScaleSumm <- read.csv('scaling_fisherSingletons.csv', as.is = TRUE)
+relLLScaleSumm <- read.csv('scaling_fisherRelLL.csv', as.is = TRUE)
+zScaleSumm <- read.csv('scaling_fisherZ.csv', as.is = TRUE)
 
 par(mfrow = c(2, 2), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
 
@@ -67,7 +69,7 @@ mtext('Number of singletons', side = 2, line = 1, outer = TRUE)
 
 
 
-relLLScaleSumm <- read.csv('scaling_fisherRelLL.csv', as.is = TRUE)
+
 
 par(mfrow = c(2, 2), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
 scalePlot(relLLScaleSumm[relLLScaleSumm$site == 'BCI', ], 'llST', log = 'x')
@@ -83,5 +85,39 @@ scalePlot(relLLScaleSumm[relLLScaleSumm$site == 'PASO', ], 'perm.llST', log = 'x
 scalePlot(relLLScaleSumm[relLLScaleSumm$site == 'PASO', ], 'perm.llF', col = 'red', add = TRUE)
 
 
-with(relLLScaleSumm[relLLScaleSumm$site == 'PASO', ], plot(scale, llF - llST, type = 'b'))
-with(relLLScale[relLLScale$site == 'PASO', ], points(scale, llF - llST, type = 'b', col = 'red'))
+
+
+
+
+
+
+par(mfcol = c(3, 1), mar = c(2, 2, 0, 0))
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'n1diff', log = 'x', xaxt = 'n')
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'perm.n1diff', log = 'x', xaxt = 'n', col = 'red', add = TRUE)
+abline(h = 0, col = 'gray')
+
+scalePlot(relLLScaleSumm[relLLScaleSumm$site == 'PASO', ], 'relLL', log = 'x')
+scalePlot(relLLScaleSumm[relLLScaleSumm$site == 'PASO', ], 'perm.relLL', log = 'x', col = 'red', add = TRUE)
+abline(h = 0, col = 'gray')
+
+scalePlot(zScaleSumm[zScaleSumm$site == 'PASO', ], 'z2', log = 'x')
+scalePlot(zScaleSumm[zScaleSumm$site == 'PASO', ], 'perm.z2', log = 'x', col = 'red', add = TRUE)
+abline(h = qchisq(0.95, 1), col = 'gray')
+
+
+
+
+
+par(mfcol = c(3, 1), mar = c(2, 2, 0, 0))
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'n1diff', log = 'x', xaxt = 'n')
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'perm.n1diff', log = 'x', xaxt = 'n', col = 'red', add = TRUE)
+abline(h = 0, col = 'gray')
+
+scalePlot(relLLScaleSumm[relLLScaleSumm$site == 'BCI', ], 'relLL', log = 'x')
+scalePlot(relLLScaleSumm[relLLScaleSumm$site == 'BCI', ], 'perm.relLL', log = 'x', col = 'red', add = TRUE)
+abline(h = 0, col = 'gray')
+
+scalePlot(zScaleSumm[zScaleSumm$site == 'BCI', ], 'z2', log = 'x')
+scalePlot(zScaleSumm[zScaleSumm$site == 'BCI', ], 'perm.z2', log = 'x', col = 'red', add = TRUE)
+abline(h = qchisq(0.95, 1), col = 'gray')
