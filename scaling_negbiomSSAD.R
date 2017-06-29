@@ -103,6 +103,7 @@ calcAtScale <- function(mat, i) {
     if(matVar <= matMu) {
         nbPar <- try(fitdistr(mat[, i], 'negative binomial')$estimate, silent = TRUE)
         if(class(nbPar) == 'try-error') nbPar <- c(NA, NA)
+        names(nbPar) <- c('k', 'mu')
     } else {
         nbPar <- c(k = mean(mat[, i]) / (var(mat[, i]) - mean(mat[, i])), 
                    mu = mean(mat[, i]))
@@ -136,7 +137,6 @@ calcAtScale <- function(mat, i) {
 ## calculate singletons across scales
 negbBCI <- scaleNegBinom(bci)
 negbPASO <- scaleNegBinom(paso)
-
 negbScale <- rbind(cbind(site = 'BCI', negbBCI), cbind(site = 'PASO', negbPASO))
 
 write.csv(negbScale, file = 'scaling_negbiomSSAD.csv', row.names = FALSE)
