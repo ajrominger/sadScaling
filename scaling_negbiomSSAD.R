@@ -137,11 +137,19 @@ negbLL <- function(x) {
     }
     
     if(sign(f(.Machine$double.eps)) == sign(f(10^4))) {
-        k <- optim(c(k = 100, mu = 50), 
-                   function(par) sum(-dnbinom(x, par[1], mu = par[2], log = TRUE)), 
-                   method = 'BFGS')$par
-        mu <- as.numeric(k[2])
-        k <- as.numeric(k[1])
+        param <- try(optim(c(k = 100, mu = 50), 
+                           function(par) sum(-dnbinom(x, par[1], mu = par[2], log = TRUE)), 
+                           method = 'BFGS')$par, silent = TRUE)
+        if(class(param) == 'try-error') {
+            param <- try(optim(c(k = 100, mu = 50), 
+                               function(par) sum(-dnbinom(x, par[1], mu = par[2], 
+                                                          log = TRUE)))$par, 
+                         silent = TRUE)
+            if(class(param) == 'try-error') param <- rep(NA, 2)
+        }
+        
+        mu <- as.numeric(param[2])
+        k <- as.numeric(param[1])
     } else {
         k <- uniroot(f, interval = c(.Machine$double.eps, 10^4))$root
         p <- 1 - sum(x) / (N * k + sum(x))
