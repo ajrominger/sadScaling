@@ -71,10 +71,16 @@ getNegB <- function(site, scale, sp) {
                                              negbScale$scale == scale]), 
            col = 'red', type = 'l', lty = 2)
     
-    legend('bottomright', legend = paste0('z = ', 
+    legend('bottomright', legend = paste0('spatial NB z = ', 
                                           round(negbScale$nbZ[negbScale$site == site & 
                                                                   negbScale$spp == sp & 
                                                                   negbScale$scale == scale], 3)))
+    legend('topleft', legend = c('spatial data', 'spatial NB', 'spatial Pois', 
+                                 'random data', 'random NB', 'random Pois'), 
+           col = c('black', 'blue', 'red', 
+                   'gray', 'blue', 'red'), 
+           pch = c(1, NA, NA, 1, NA, NA), 
+           lty = c(NA, 1, 1, NA, 2, 2))
 }
 
 
@@ -91,7 +97,7 @@ par(mar = c(2.5, 2.5, 0, 0) + 0.2, mgp = c(1.5, 0.5, 0))
 j <- 1
 with(negbScale[negbScale$site == 'PASO', ], {
     i <- unique(spp)[j]
-    # browser()
+    browser()
     plot(1, xlim = range(scale), ylim = c(min(negbScale$nbLL - negbScale$pLL, na.rm = TRUE), 400), 
          log = 'x', type = 'n', 
          xlab = 'scale', ylab = 'NB logLik - Pois logLik')
@@ -99,7 +105,7 @@ with(negbScale[negbScale$site == 'PASO', ], {
     points(scale[spp == i], nbLL[spp == i] - pLL[spp == i], type = 'l')
     points(scale[spp == i], perm.nbLL[spp == i] - perm.pLL[spp == i], type = 'l', col = 'red')
     
-    plot(scale[spp == i], nbZ[spp == i], log = 'xy', type = 'b', ylim = c(0.0001, 5000))
+    plot(scale[spp == i], nbZ[spp == i], log = 'xy', type = 'b', ylim = c(0.00000001, 5000))
     points(scale[spp == i], perm.nbZ[spp == i], col = 'red', type = 'b')
     abline(h = qchisq(0.95, 1))
     
@@ -111,12 +117,12 @@ with(negbScale[negbScale$site == 'PASO', ], {
          xlab = 'scale', ylab = 'NB mu')
     points(scale[spp == i], nbPar.mu[spp == i], type = 'l')
     
-    plot(1, xlim = range(scale), ylim = c(0.001, 20), log = 'x', type = 'n', 
+    plot(1, xlim = range(scale), ylim = c(0.0000001, 5), log = 'xy', type = 'n', 
          xlab = 'scale', ylab = 'KL')
     points(scale[spp == i], kl[spp == i], type = 'l')
     points(scale[spp == i], perm.kl[spp == i], type = 'l', col = 'red')
     
-    getNegB('PASO', unique(negbScale$scale)[5], i)
+    getNegB('PASO', unique(negbScale$scale)[6], i)
 })
 j <- j + 1
 
