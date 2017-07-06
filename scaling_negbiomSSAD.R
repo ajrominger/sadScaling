@@ -98,17 +98,7 @@ determineScale <- function(r) {
 
 calcAtScale <- function(mat, i) {
     ## get distrib params
-    matMu <- mean(mat[, i])
-    matVar <- var(mat[, i])
-    if(matVar <= matMu) {
-        nbPar <- try(fitdistr(mat[, i], 'negative binomial')$estimate, silent = TRUE)
-        if(class(nbPar) == 'try-error') nbPar <- c(NA, NA)
-        names(nbPar) <- c('k', 'mu')
-    } else {
-        nbPar <- c(k = mean(mat[, i]) / (var(mat[, i]) - mean(mat[, i])), 
-                   mu = mean(mat[, i]))
-    }
-    
+    nbPar <- negbLL(mat[, i])
     pPar <- mean(mat[, i])
     
     ## calculate likelihoods
@@ -116,9 +106,12 @@ calcAtScale <- function(mat, i) {
     pLL <- sum(dpois(mat[, i], pPar, log = TRUE))
     
     ## calculate z2 for negbinom
-    nmax <- qnbinom(1-.Machine$double.eps^0.9, size = nbPar[1], mu = nbPar[2])*50
-    if(!is.integer(nmax)) nmax <- 1
+    nmax <- 10^5
     p0 <- dnbinom(0:nmax, size = nbPar[1], mu = nbPar[2], log = TRUE)
+    if(exp(p0[nmax + 1]) > .Machine$double.eps) {
+        p0 <- c(p0, dnbinom((nmax+1):(10*nmax), size = nbPar[1], mu = nbPar[2], log = TRUE))
+    }
+    
     p0 <- p0[is.finite(p0)]
     n <- nrow(mat)
     m <- sum(p0 * exp(p0)) * n
@@ -134,7 +127,32 @@ calcAtScale <- function(mat, i) {
     return(c(nbLL = nbLL, pLL = pLL, nbZ = nbZ, nbPar = nbPar, kl = kl))
 }
 
-## calculate singletons across scales
+negbLL <- function(x) {
+    N <- length(x)
+    
+    f <- function(k) {
+        unlist(lapply(k, function(r) {
+            sum(digamma(x + r)) - N * digamma(r) + N * log(r / (r + mean(x)))
+        }))
+    }
+    
+    if(sign(f(.Machine$double.eps)) == sign(f(10^4))) {
+        k <- optim(c(k = 100, mu = 50), 
+                   function(par) sum(-dnbinom(x, par[1], mu = par[2], log = TRUE)), 
+                   method = 'BFGS')$par
+        mu <- as.numeric(k[2])
+        k <- as.numeric(k[1])
+    } else {
+        k <- uniroot(f, interval = c(.Machine$double.eps, 10^4))$root
+        p <- 1 - sum(x) / (N * k + sum(x))
+        mu <- (k/p) - k
+    }
+    
+    return(c(k = k, mu = mu))
+}
+
+
+## calculate negbinom  across scales
 negbBCI <- scaleNegBinom(bci)
 negbPASO <- scaleNegBinom(paso)
 negbScale <- rbind(cbind(site = 'BCI', negbBCI), cbind(site = 'PASO', negbPASO))
