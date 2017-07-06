@@ -85,13 +85,13 @@ getNegB <- function(site, scale, sp) {
 
 
 
-layout(matrix(c(1, 2, 3, 4, 5, 5), ncol = 3))
+layout(matrix(c(1, 2, 3, 4, 5, 6), ncol = 3))
 par(mar = c(2.5, 2.5, 0, 0) + 0.2, mgp = c(1.5, 0.5, 0))
 
 j <- 1
 with(negbScale[negbScale$site == 'PASO', ], {
     i <- unique(spp)[j]
-    browser()
+    # browser()
     plot(1, xlim = range(scale), ylim = c(min(negbScale$nbLL - negbScale$pLL, na.rm = TRUE), 400), 
          log = 'x', type = 'n', 
          xlab = 'scale', ylab = 'NB logLik - Pois logLik')
@@ -116,7 +116,7 @@ with(negbScale[negbScale$site == 'PASO', ], {
     points(scale[spp == i], kl[spp == i], type = 'l')
     points(scale[spp == i], perm.kl[spp == i], type = 'l', col = 'red')
     
-    # getNegB('PASO', unique(negbScale$scale)[5], i)
+    getNegB('PASO', unique(negbScale$scale)[5], i)
 })
 j <- j + 1
 
