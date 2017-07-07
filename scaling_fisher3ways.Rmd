@@ -20,140 +20,109 @@ source('scaling_helpers.R')
 # 
 # paso <- read.csv('../data/stri/PASO.csv', as.is = TRUE)
 # paso <- paso[paso$year == max(paso$year), ]
-```
 
-# Intro to scaling
-
-How we do the scaling
-
-```{r, fig.align='center', fig.width=4, fig.height=4}
-## calcualte scaling for the two datasets and show plot of colors onto scales
-r <- raster(ncols = 1000, nrows = 500, xmn = 0, xmx = 1000, ymn = 0, ymx = 500)
-s <- determineScale(r)
-col <- quantCol(s[, 1] * s[, 2], pal = hsv(c(0.12, 0.6, 0.94), c(0.4, 0.8, 0.7), c(0.8, 0.6, 0.2)), 
-                trans = 'log')
-
-layout(matrix(1:2, nrow = 1), widths = c(2, 1))
-par(mar = rep(0.5, 4))
-plot(1, xlim = c(-100, 1000), ylim = c(-100, 500), type = 'n', asp = 1, axes = FALSE)
-for(i in 1:6) {
-    rect(0, 0, s[i, 1] - (i-1)*10, s[i, 2] - (i-1)*10, lwd = 1, border = 'white', col = col[(i - 1)*2.5 + 1])
+scalePlot <- function(summ, y, jit = 1, col = 'black', ylim = NULL, add = FALSE, ...) {
+    x <- summ$scale * jit
+    
+    if(is.null(ylim)) {
+        ylim <- range(summ[, grep(y, colnames(summ))])
+    }
+    
+    if(add) {
+        lines(x, summ[[y]], col = col, lty = 2)
+        segments(x0 = x, 
+                 y0 = summ[[paste(y, 'ci1', sep = '.')]], y1 = summ[[paste(y, 'ci2', sep = '.')]], 
+                 col = col)
+        points(x, summ[[y]], pch = 16, col = col)
+    } else {
+        plot(x, summ[[y]], pch = 16, col = col, ylim = ylim,
+             panel.first = {
+                 lines(x, summ[[y]], col = col, lty = 2)
+                 segments(x0 = x, 
+                          y0 = summ[[paste(y, 'ci1', sep = '.')]], y1 = summ[[paste(y, 'ci2', sep = '.')]], 
+                          col = col)
+             }, ...)
+    }
 }
-rect(0, 0, s[1, 1], s[1, 2])
-
-par(mar = c(6, 1, 6, 4))
-plot(1, xlim = 0:1, ylim = range(s[, 1] * s[, 2]), log = 'y', 
-     xaxs = 'i', yaxs = 'i', axes = FALSE, 
-     xlab = '', ylab = '')
-rect(xleft = 0, xright = 1, 
-     ybottom = exp(seq(log(prod(s[1, ])), log(prod(s[nrow(s), ])), length.out = 51))[-51],
-     ytop = exp(seq(log(prod(s[1, ])), log(prod(s[nrow(s), ])), length.out = 51))[-1], 
-     border = colorRampPalette(col)(50),
-     col = colorRampPalette(col)(50))
-box()
-logAxis(4, expLab = TRUE)
-mtext(expression('Area ('*m^2*')'), side = 4, line = 2.5)
 ```
-
-# Scaling z-score
-
-# Scaling relative log likelihood
-
-```{r}
-bciScaleRelLL <- read.csv('scaling_fisherRelLL_BCI.csv', as.is = TRUE)
-head(bciScaleRelLL)
-with(bciScaleRelLL, {
-    plot(scale, sign(llMean) * abs(llMean)^0.5, log = 'x',
-         ylim = c(-1, 1) * max(abs(llMean), abs(llPermMean), na.rm = TRUE)^0.5, 
-         type = 'b')
-    points(scale, sign(llPermMean) * abs(llPermMean)^0.5, col = 'red', type = 'b')
-})
-```
-
-# Scaling singletons
 
 ```{r}
 singScaleSumm <- read.csv('scaling_fisherSingletons.csv', as.is = TRUE)
+zScaleSumm <- read.csv('scaling_fisherZ.csv', as.is = TRUE)
 
-col <- quantCol(singScaleSumm$scale, 
-                pal = hsv(c(0.12, 0.6, 1), c(0.8, 1, 1), c(0.8, 0.8, 0.7)), 
-                trans = 'log')
-
-par(mfrow = c(1, 2), mar = c(0, 0, 2, 0) + 0.5, 
-    oma = c(3, 3, 1, 1), mgp = c(2, 0.75, 0))
-
-plot(singScaleSumm$n1fish, singScaleSumm$n1obs, pch = 16,
-     col = col, panel.first = {
-         lines(singScaleSumm$n1fish, singScaleSumm$n1obs, lty = 2, col = 'gray')
-         segments(x0 = singScaleSumm$n1fish, 
-                  y0 = singScaleSumm$n1obs.ci1, y1 = singScaleSumm$n1obs.ci2, 
-                  col = col)
-         segments(x0 = singScaleSumm$n1fish.ci1, x1 = singScaleSumm$n1fish.ci2, 
-                  y0 = singScaleSumm$n1obs, 
-                  col = col)
-     }, 
-     xlim = range(singScaleSumm[, grepl('n1fish', names(singScaleSumm))]), 
-     ylim = range(singScaleSumm[, grepl('n1obs', names(singScaleSumm))]))
-abline(0, 1)
-mtext('Spatial subset', side = 3, outer = FALSE, line = 0)
-
-plot(singScaleSumm$perm.n1fish, singScaleSumm$perm.n1obs, pch = 16,
-     col = col, 
-     panel.first = {
-         lines(singScaleSumm$perm.n1fish, singScaleSumm$perm.n1obs, lty = 2, col = 'gray')
-         segments(x0 = singScaleSumm$perm.n1fish, 
-                  y0 = singScaleSumm$perm.n1obs.ci1, y1 = singScaleSumm$perm.n1obs.ci2, 
-                  col = col)
-         segments(x0 = singScaleSumm$perm.n1fish.ci1, x1 = singScaleSumm$perm.n1fish.ci2, 
-                  y0 = singScaleSumm$perm.n1obs, 
-                  col = col)
-     }, 
-     yaxt = 'n',
-     xlim = range(singScaleSumm[, grepl('perm.n1fish', names(singScaleSumm))]), 
-     ylim = range(singScaleSumm[, grepl('perm.n1obs', names(singScaleSumm))]))
-abline(0, 1)
-
-mtext('Random subset', side = 3, outer = FALSE, line = 0)
-
-mtext('Logseries-predicted singletons', side = 1, outer = TRUE, line = 1.5)
-mtext('Observed singletons', side = 2, outer = TRUE, line = 1.5)
-
-par(mfrow = c(1, 2), mar = c(0, 0, 2, 0) + 0.5, 
-    oma = c(3, 3, 1, 1), mgp = c(2, 0.75, 0))
-
-plot(singScaleSumm$n1obs, singScaleSumm$perm.n1obs, pch = 16,
-     col = col, panel.first = {
-         lines(singScaleSumm$n1obs, singScaleSumm$perm.n1obs, lty = 2, col = 'gray')
-         segments(x0 = singScaleSumm$n1obs, 
-                  y0 = singScaleSumm$perm.n1obs.ci1, y1 = singScaleSumm$perm.n1obs.ci2, 
-                  col = col)
-         segments(x0 = singScaleSumm$n1obs.ci1, x1 = singScaleSumm$n1obs.ci2, 
-                  y0 = singScaleSumm$perm.n1obs, 
-                  col = col)
-     }, 
-     xlim = range(singScaleSumm[, grepl('n1obs', names(singScaleSumm)) & 
-                                    !grepl('perm', names(singScaleSumm))]), 
-     ylim = range(singScaleSumm[, grepl('perm.n1obs', names(singScaleSumm))]))
-abline(0, 1)
-mtext('Observed', side = 3, outer = FALSE, line = 0)
-
-plot(singScaleSumm$n1fish, singScaleSumm$perm.n1fish, pch = 16,
-     col = col, panel.first = {
-         lines(singScaleSumm$n1fish, singScaleSumm$perm.n1fish, lty = 2, col = 'gray')
-         segments(x0 = singScaleSumm$n1fish, 
-                  y0 = singScaleSumm$perm.n1fish.ci1, y1 = singScaleSumm$perm.n1fish.ci2, 
-                  col = col)
-         segments(x0 = singScaleSumm$n1fish.ci1, x1 = singScaleSumm$n1fish.ci2, 
-                  y0 = singScaleSumm$perm.n1fish, 
-                  col = col)
-     }, 
-     xlim = range(singScaleSumm[, grepl('n1fish', names(singScaleSumm)) & 
-                                    !grepl('perm', names(singScaleSumm))]), 
-     ylim = range(singScaleSumm[, grepl('perm.n1fish', names(singScaleSumm))]), 
-     yaxt = 'n')
-abline(0, 1)
-mtext('Logseries', side = 3, outer = FALSE, line = 0)
-
-mtext('Singletons in spatial subsets', side = 1, outer = TRUE, line = 1.5)
-mtext('Singletons in random subsets', side = 2, outer = TRUE, line = 1.5)
+obsCol <- hsv(0.5, 1, 0.5)
+fishCol <- hsv(0, 1, 0.5)
+perm.obsCol <- hsv(0.6, 0.9, 0.6)
+perm.fishCol <- hsv(0.1, 0.8, 0.7)
 ```
+
+```{r, fig.align='center', fig.height=5, fig.width=5}
+par(mfrow = c(2, 1), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
+
+scalePlot(zScaleSumm[zScaleSumm$site == 'BCI', ], 'z2', log = 'x', xaxt = 'n', col = fishCol)
+scalePlot(zScaleSumm[zScaleSumm$site == 'BCI', ], 'perm.z2', col = perm.fishCol, add = TRUE, jit = 1.1)
+abline(h = qchisq(0.95, 1), col = 'gray')
+mtext('BCI', side = 4, line = 0.5)
+legend('topleft', legend = c('Spatial', 'Random'), col = c(fishCol, perm.fishCol), pch = 16, bty = 'n')
+
+scalePlot(zScaleSumm[zScaleSumm$site == 'PASO', ], 'z2', log = 'x', xaxt = 'n', col = fishCol)
+scalePlot(zScaleSumm[zScaleSumm$site == 'PASO', ], 'perm.z2', col = perm.fishCol, add = TRUE, jit = 1.1)
+abline(h = qchisq(0.95, 1), col = 'gray')
+logAxis(1, expLab = TRUE)
+mtext('PASO', side = 4, line = 0.5)
+
+mtext(expression('Area ('*m^2*')'), side = 1, line = 1, outer = TRUE)
+mtext(expression(z^2*'-score'), side = 2, outer = TRUE, line = 1)
+```
+
+```{r, fig.align='center', fig.height=5, fig.width=5}
+par(mfrow = c(2, 2), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'n1fish', add = TRUE, jit = 1.1, col = fishCol)
+legend('topleft', legend = c('Observed', 'Logseries'), 
+       col = c(obsCol, fishCol), pch = 16, bty = 'n')
+mtext('Spatial subsets', side = 3, line = 1)
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'perm.n1obs', log = 'x', xaxt = 'n', yaxt = 'n', 
+          col = perm.obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'perm.n1fish', add = TRUE, jit = 1.1, 
+          col = perm.fishCol)
+legend('topleft', legend = c('Observed', 'Logseries'), 
+       col = c(perm.obsCol, perm.fishCol), pch = 16, bty = 'n')
+mtext('BCI', side = 4, line = 0.5)
+mtext('Random subsets', side = 3, line = 1)
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'n1fish', add = TRUE, jit = 1.1, col = fishCol, 
+          xaxt = 'n')
+logAxis(1, expLab = TRUE)
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'perm.n1obs', log = 'x', xaxt = 'n', yaxt = 'n', 
+          col = perm.obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'perm.n1fish', add = TRUE, jit = 1.1,
+          xaxt = 'n', col = perm.fishCol)
+logAxis(1, expLab = TRUE)
+mtext('PASO', side = 4, line = 0.5)
+
+mtext(expression('Area ('*m^2*')'), side = 1, line = 1, outer = TRUE)
+mtext('Number of singletons', side = 2, line = 1, outer = TRUE)
+```
+
+```{r, fig.align='center', fig.width=5, fig.height=5}
+par(mfrow = c(2, 1), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'perm.n1obs', add = TRUE, jit = 1.1, col = perm.obsCol)
+mtext('BCI', side = 4, line = 0.5)
+legend('topleft', legend = c('Spatial', 'Random'), col = c(obsCol, perm.obsCol), pch = 16, bty = 'n')
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'perm.n1obs', add = TRUE, jit = 1.1, col = perm.obsCol)
+logAxis(1, expLab = TRUE)
+mtext('PASO', side = 4, line = 0.5)
+
+mtext(expression('Area ('*m^2*')'), side = 1, line = 1, outer = TRUE)
+mtext('Observed number of singletons', side = 2, line = 1, outer = TRUE)
+```
+
