@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 
 ## packages
 library(socorro)
@@ -44,9 +44,8 @@ scalePlot <- function(summ, y, jit = 1, col = 'black', ylim = NULL, add = FALSE,
              }, ...)
     }
 }
-```
 
-```{r}
+
 singScaleSumm <- read.csv('scaling_fisherSingletons.csv', as.is = TRUE)
 zScaleSumm <- read.csv('scaling_fisherZ.csv', as.is = TRUE)
 
@@ -56,7 +55,9 @@ perm.obsCol <- hsv(0.6, 0.9, 0.6)
 perm.fishCol <- hsv(0.1, 0.8, 0.7)
 ```
 
-```{r, fig.align='center', fig.height=5, fig.width=5}
+When I look at how well the Fisher log-series works across scales, it seems as though spatial subsets are not different from random subsets.  I come to this conclusion by comparing the $z^2$-value (which measures goodness of fit) for spatial and random subsets of the BCI and PASO datasets (Fig. \ref{fig:scaleZ}).  I define a spatial subset as all the stems within a specified area.  I define a comparable random subset as a random sample of the same number of stems taken from across the plot.
+
+```{r, fig.align='center', fig.height=4, fig.width=4, fig.cap='\\label{fig:scaleZ}Relationship between $z^2$ value and scale. Gray dashed line corresponds to hypothesis test critical value, with points above rejecting the log-series at $\\alpha = 0.05$'}
 par(mfrow = c(2, 1), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
 
 scalePlot(zScaleSumm[zScaleSumm$site == 'BCI', ], 'z2', log = 'x', xaxt = 'n', col = fishCol)
@@ -75,7 +76,30 @@ mtext(expression('Area ('*m^2*')'), side = 1, line = 1, outer = TRUE)
 mtext(expression(z^2*'-score'), side = 2, outer = TRUE, line = 1)
 ```
 
-```{r, fig.align='center', fig.height=5, fig.width=5}
+I find this result surprising, as spatial and random subsets certainly have different shaped SADs.  We can see this just by comparing the rare tail.  In Figure \ref{fig:obsSingle} I compare the number of singletons in spatial and random subsets.
+
+```{r, fig.align='center', fig.width=4, fig.height=4, fig.cap='\\label{fig:obsSingle}Relationship between number of singletons and scale.'}
+par(mfrow = c(2, 1), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'perm.n1obs', add = TRUE, jit = 1.1, col = perm.obsCol)
+mtext('BCI', side = 4, line = 0.5)
+legend('topleft', legend = c('Spatial', 'Random'), col = c(obsCol, perm.obsCol), pch = 16, bty = 'n')
+
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
+scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'perm.n1obs', add = TRUE, jit = 1.1, col = perm.obsCol)
+logAxis(1, expLab = TRUE)
+mtext('PASO', side = 4, line = 0.5)
+
+mtext(expression('Area ('*m^2*')'), side = 1, line = 1, outer = TRUE)
+mtext('Observed number of singletons', side = 2, line = 1, outer = TRUE)
+```
+
+Clearly, random subsets diverge from spatial subsets at intermediate scale, where we see more rarity (more singletons) in random subsets.  Interestingly, this pattern is very similar across the two datasets.
+
+So how could the SADs look different, but their fit to the Fisher log series be the same?  From Figure \ref{fig:fishSingle} it seems that across scales the log-series first accurately predicts the number of singletons at small scale (for both spatial and random subsets) but then at large scale, the log-series over-predicts the number of singletons---but importantly this over-prediction is again the same for both spatial and random subsets.  So while the log-series does indeed fail at large scale, it fails the same for both spatial and random subsets.
+
+```{r, fig.align='center', fig.height=4, fig.width=4, fig.cap='\\label{fig:fishSingle}Relationship between predicted and observed number of singletons versus scale.'}
 par(mfrow = c(2, 2), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
 
 scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
@@ -109,20 +133,36 @@ mtext(expression('Area ('*m^2*')'), side = 1, line = 1, outer = TRUE)
 mtext('Number of singletons', side = 2, line = 1, outer = TRUE)
 ```
 
-```{r, fig.align='center', fig.width=5, fig.height=5}
+So we're left to ask, is space what matters for the log-series, or is it just sample size.  It would seem to be just sample size.  That's a little disappointing given that we had cool hypotheses about local dispersal limitation facilitating a shift from null/neutral processes at small scale to other ecological/evolutionary processes at large scale.  But we can still pick up a signal of dispersal limitation by looking at spatial aggregation.  The short story is that most species' spatial distributions are very well described by a negative binomial across scales for spatial subsets, and not surprisingly random subsets look like Poisson distributions.  I evaluate that by looking at the difference between the log likelihoods of the negative binomial versus the Poisson for spatial and random subsets (Fig. \ref{fig:nb}). Species' spatial distributions are computed as the number of individuals of each species in each random sample---either in a spatial grid, or from random samples of the same size taken arbitrarily across the plot.
+
+```{r, fig.width=4, fig.height=4, fig.align='center', fig.cap='\\label{fig:nb}Scaling of nagative binomial fit.  When the points are greater than 0, the negative binomial is favored; when the points equal 0, there is no difference between negative binomial and Poisson.'}
+library(plyr)
+negbScale <- read.csv('scaling_negbiomSSAD.csv', as.is = TRUE)
+
+negbScaleLLSumm <- ddply(negbScale, c('site', 'scale'), function(x) {
+    d <- x$nbLL - x$pLL
+    permD <- x$perm.nbLL - x$perm.pLL
+    
+    return(c(llD = mean(d), llD.ci = quantile(d, c(0.025, 0.975), names = FALSE), 
+             perm.llD = mean(permD), 
+             perm.llD.ci = quantile(permD, c(0.025, 0.975), names = FALSE)))
+})
+
 par(mfrow = c(2, 1), mar = c(0, 0, 0, 0) + 0.5, oma = c(3, 3, 2, 2), mgp = c(2, 0.25, 0), tcl = -0.25)
 
-scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
-scalePlot(singScaleSumm[singScaleSumm$site == 'BCI', ], 'perm.n1obs', add = TRUE, jit = 1.1, col = perm.obsCol)
-mtext('BCI', side = 4, line = 0.5)
-legend('topleft', legend = c('Spatial', 'Random'), col = c(obsCol, perm.obsCol), pch = 16, bty = 'n')
+scalePlot(negbScaleLLSumm[negbScaleLLSumm$site == 'BCI', ], 'llD', log = 'x', 
+          xaxt = 'n')
+scalePlot(negbScaleLLSumm[negbScaleLLSumm$site == 'BCI', ], 'perm.llD', jit = 1.1, 
+          add = TRUE, col = 'gray')
+legend('topleft', legend = c('Spatial', 'Random'), col = c('black', 'gray'), pch = 16, 
+       bg = 'white', box.col = 'white')
 
-scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'n1obs', log = 'x', xaxt = 'n', col = obsCol)
-scalePlot(singScaleSumm[singScaleSumm$site == 'PASO', ], 'perm.n1obs', add = TRUE, jit = 1.1, col = perm.obsCol)
-logAxis(1, expLab = TRUE)
-mtext('PASO', side = 4, line = 0.5)
+scalePlot(negbScaleLLSumm[negbScaleLLSumm$site == 'PASO', ], 'llD', log = 'x', 
+          xaxt = 'n')
+scalePlot(negbScaleLLSumm[negbScaleLLSumm$site == 'PASO', ], 'perm.llD', jit = 1.1, 
+          add = TRUE, col = 'gray')
 
 mtext(expression('Area ('*m^2*')'), side = 1, line = 1, outer = TRUE)
-mtext('Observed number of singletons', side = 2, line = 1, outer = TRUE)
+mtext(expression(ll[negbinom] - ll[pois]), side = 2, line = 1, outer = TRUE)
 ```
 
