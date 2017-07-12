@@ -204,8 +204,22 @@ lines(x, col = hsv(0.05, 0.5, 0.8), lwd = 3)
 text(4, 10, "Fisher's logseries", pos = 4, col = hsv(0.05, 0.5, 0.8))
 dev.off()
 
-## BDI
-matrix(c(0, 1, 1, 0, 0, 0, 0,
-  0, 0, 0, 1, 1, 0, 0,
-  0 ,0, 0, 0, 0, 1, 0, 
-  rep(0, 7*3)), nrow = 7, byrow = TRUE)
+## scaling fisher
+x <- read.csv('../scaling_fisherZ.csv')
+
+pdf('fig_z2Scale.pdf', width = 5, height = 5)
+par(mar = c(3, 3, 0, 0) + 0.5, mgp = c(2, 0.5, 0),
+    bg = 'black', fg = 'white', col.lab = 'white', col.axis = 'white')
+
+with(x[x$site == 'PASO', ], {
+    plot(scale, z2, ylim = range(z2.ci1, z2.ci2), log = 'xy',
+         axes = FALSE, frame.plot = TRUE,
+         panel.first = {
+             segments(x0 = scale, y0 = z2.ci1, y1 = z2.ci2)
+         }, 
+         pch = 21, col = 'white', bg = 'black', cex = 1.5, cex.lab = 1.2,
+         xlab = expression('Area ('*m^2*')'), ylab = expression(z^2))
+    logAxis(1, TRUE); logAxis(2, TRUE)
+})
+
+dev.off()
