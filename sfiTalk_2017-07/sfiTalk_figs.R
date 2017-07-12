@@ -94,44 +94,61 @@ plot(x, vertex.label = NA, vertex.size = 200,
 dev.off()
 
 
-set.seed(1)
-x <- nicheMod(100, 0.4)
+# set.seed(1)
+x <- nicheMod(100, 0.22)
 x <- x[rowSums(x) > 0, colSums(x) > 0]
 N <- nrow(x)
 x <- x * matrix(runif(N^2), nrow = N)
 
-image(x, asp = 1, col = colorRampPalette(hsv(c(0.17, 0.20, 0.30, 0.60, 0.80), 
-                                             c(0.30, 0.80, 1.00, 0.80, 0.80), 
-                                             c(0.90, 0.80, 1.00, 0.80, 0.80)))(20)))
 
 pdf('fig_trophicMat.pdf', width = 4, height = 4)
-lay <- layout_as_tree(x)
-lay[lay[, 2] == min(lay[, 2]), 2] <- min(lay[lay[, 2] != min(lay[, 2]), 2])
 par(mar = rep(0.1, 4), bg = 'black')
-plot(x, vertex.label = NA, vertex.size = 2, 
-     vertex.color = 'white', vertex.frame.color = 'white',
-     edge.color = hsv(0, 0, 1, alpha = 0.25),
-     layout = lay)
+image(x, asp = 1, col = colorRampPalette(hsv(c(0.10, 0.20, 0.30, 0.60, 0.80),
+                                             c(0.10, 0.80, 1.00, 0.80, 0.80),
+                                             c(0.70, 0.80, 0.60, 0.80, 0.80)))(20))
 dev.off()
 
-set.seed(2)
+# set.seed(2)
 tre <- rphylo(N, 0.9, 0.5, fossils = TRUE)
 e <- tre$edge[, 2]
 eExtant <- which(e[e %in% 1:Ntip(tre)] %in% 1:N)
 lay2 <- cbind(eExtant, rep(1, N))
 
-pdf('fig_trophicWeb-phylo.pdf', width = 6, height = 4)
+x2 <- matrix(NA, nrow = Ntip(tre), ncol = ncol(x))
+x2[eExtant, ] <- x
+
+
+pdf('fig_trophicMat-phylo1.pdf', width = 5, height = 4)
 layout(matrix(2:1, nrow = 2), heights = c(1, 3))
-par(bg = 'black', fg = 'white', mar = rep(0, 4))
+par(bg = 'black', mar = c(0, 0, 0, 0))
+
+plot(drop.fossil(tre), direction = 'upward', edge.color = 'white', show.tip.label = FALSE, 
+     y.lim = c(-0.3, 6.9), yaxs = 'i')
+
+par(bg = 'black', mar = c(0, 0, 4, 0))
+image(1:nrow(x), 1:ncol(x), x, 
+      col = colorRampPalette(hsv(c(0.10, 0.20, 0.30, 0.60, 0.80), 
+                                 c(0.10, 0.80, 1.00, 0.80, 0.80), 
+                                 c(0.70, 0.80, 0.60, 0.80, 0.80)))(20), 
+      axes = FALSE, xlim = par('usr')[1:2], xaxs = 'i')
+
+dev.off()
+
+
+pdf('fig_trophicMat-phylo2.pdf', width = 5, height = 4)
+layout(matrix(2:1, nrow = 2), heights = c(1, 3))
+
+par(bg = 'black', mar = c(0, 0, 0, 0))
 
 plot(tre, direction = 'upward', edge.color = 'white', show.tip.label = FALSE, 
      y.lim = c(-0.3, 7.5), yaxs = 'i')
 
-plot(x, vertex.label = NA, vertex.size = 200, 
-     vertex.color = 'white', vertex.frame.color = 'white',
-     edge.color = hsv(0, 0, 1, alpha = 0.25), edge.curved = 1,
-     layout = lay2, ylim = c(1, 70), xlim = c(1, Ntip(tre)), 
-     rescale = FALSE, asp = 0)
+par(bg = 'black', mar = c(0, 0, 4, 0))
+image(x = 1:Ntip(tre), y = 1:ncol(x2), z = x2, 
+      col = colorRampPalette(hsv(c(0.10, 0.20, 0.30, 0.60, 0.80), 
+                                 c(0.10, 0.80, 1.00, 0.80, 0.80), 
+                                 c(0.70, 0.80, 0.60, 0.80, 0.80)))(20), 
+      axes = FALSE, xlim = par('usr')[1:2], xaxs = 'i')
 
 dev.off()
 
@@ -159,3 +176,36 @@ dev.off()
 
 
 ## sad motivation and theory fig
+set.seed(1)
+x <- sad2Rank(sad(rfish(10, 0.1), 'fish'))
+rad <- lapply(1:length(x), function(i) cbind(i, 1:x[i]))
+rad <- do.call(rbind, rad)
+
+pdf('fig_sad1.pdf', width = 5, height = 5)
+par(bg = 'black', fg = 'white', mar = c(2, 2, 0, 0) + 0.2, mgp = c(1, 1, 0))
+plot(rad, xlab = 'Species', ylab = 'Abundance', pch = 21, bg = 'gray', col = 'white', 
+     axes = FALSE, col.lab = 'white', cex = 2, cex.lab = 1.5)
+dev.off()
+
+pdf('fig_sad2.pdf', width = 5, height = 5)
+par(bg = 'black', fg = 'white', mar = c(2, 2, 0, 0) + 0.2, mgp = c(1, 1, 0))
+plot(rad, xlab = 'Species', ylab = 'Abundance', pch = 21, bg = 'gray', col = 'white', 
+     axes = FALSE, col.lab = 'white', cex = 2, cex.lab = 1.5)
+lines(sad2Rank(sad(x, 'stick')), col = hsv(0.6, 0.5, 1), lwd = 3)
+lines(sad2Rank(sad(x, 'tpois')), col = hsv(0.8, 0.3, 0.8), lwd = 3)
+lines(x, col = hsv(0.05, 0.5, 0.8), lwd = 3)
+dev.off()
+
+pdf('fig_sad3.pdf', width = 5, height = 5)
+par(bg = 'black', fg = 'white', mar = c(2, 2, 0, 0) + 0.2, mgp = c(1, 1, 0))
+plot(rad, xlab = 'Species', ylab = 'Abundance', pch = 21, bg = 'gray', col = 'white', 
+     axes = FALSE, col.lab = 'white', cex = 2, cex.lab = 1.5)
+lines(x, col = hsv(0.05, 0.5, 0.8), lwd = 3)
+text(4, 10, "Fisher's logseries", pos = 4, col = hsv(0.05, 0.5, 0.8))
+dev.off()
+
+## BDI
+matrix(c(0, 1, 1, 0, 0, 0, 0,
+  0, 0, 0, 1, 1, 0, 0,
+  0 ,0, 0, 0, 0, 1, 0, 
+  rep(0, 7*3)), nrow = 7, byrow = TRUE)
