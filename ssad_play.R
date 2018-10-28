@@ -6,30 +6,51 @@ library(spatstat)
 library(sp)
 
 
-n <- 2^11
+# make a spatial GP on a fine grid
+n <- 2^8
 
-thisGP <- gp(c(n, n), specdens.param = c(0.1, 0.1))
+thisGP <- gp(c(n, n), specdens.param = c(0.1, 1))
 simulate(thisGP)
-thisGP <- as.im(0.05 * exp(predict(thisGP)), W = owin(c(0, n), c(0, n)))
+plot(as.im(predict(thisGP)))
 
-thisSSAD <- rpoispp(thisGP)
+
+relGP <- as.im(0.001 * exp(predict(thisGP)), W = owin(c(0, n), c(0, n)))
+
+# sample it as a Poisson
+thisSSAD <- rpoispp(relGP)
 thisSSAD <- SpatialPoints(cbind(thisSSAD$x, thisSSAD$y))
 
-r <- raster(nrows = n, ncols = n, xmn = 0, xmx = n, ymn = 0, ymx = n)
-thisSSAD <- rasterize(thisSSAD, r, fun = 'count')
-thisSSAD[is.na(thisSSAD[])] <- 0
+nrow(thisSSAD@coords)
+
+pdf('foo.pdf')
+plot(log(relGP))
+points(thisSSAD, pch = 16, col = hsv(0, 0, 1, alpha = 1), cex = 0.2)
+dev.off()
 
 
+# make a raster of counts from the Poisson process
+r <- raster(nrows = n / 2, ncols = n / 2, xmn = 0, xmx = n, ymn = 0, ymx = n)
+thisSSAD <- rasterize(thisSSAD, r, fun = 'count', background = 0)
+
+
+# calculate negbinom pars across increasing aggregations
 negbPar <- matrix(NA, nrow = log(n, base = 2) - 2, ncol = 3)
 colnames(negbPar) <- c('A', 'k', 'mu')
 
+
 for(i in 1:nrow(negbPar)) {
-    thisSSAD <- aggregate(thisSSAD, fact = 2, fun = sum)
+    if(i > 1) {
+        thisSSAD <- aggregate(thisSSAD, fact = 2, fun = sum)
+    }
+    
     f <- fitdistr(thisSSAD[], 'negative binomial')
     
     negbPar[i, 2:3] <- f$estimate
-    negbPar[i, 1] <- xmax(extent(thisSSAD)) * ymax(extent(thisSSAD)) / (ncol(thisSSAD) * nrow(thisSSAD))
+    negbPar[i, 1] <- xmax(extent(thisSSAD)) * ymax(extent(thisSSAD)) / 
+        (ncol(thisSSAD) * nrow(thisSSAD))
     
 }
 
-plot(negbPar[, c(1, 2)], log = 'xy')
+plot(negbPar[, c(1, 2)], log = 'xy', axes = FALSE, frame.plot = TRUE, ylim = c(1, 10))
+logAxis(1, expLab = TRUE)
+logAxis(2)
